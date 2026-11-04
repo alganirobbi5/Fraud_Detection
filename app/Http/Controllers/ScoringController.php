@@ -21,8 +21,11 @@ class ScoringController extends Controller
     {
         $data = Data::all();
 
-        if(Data::count() == 0){
-            return redirect('/404');
+        if ($data->isEmpty()) {
+            return view('tables.scoring', [
+                'data' => $data,
+                'hasData' => false,
+            ]);
         }
 
         $cityMostClaim = DB::table('data')
@@ -113,22 +116,22 @@ class ScoringController extends Controller
         $cityDataCount = DB::table('data')
             ->where('city', $mostCity)
             ->count();
-        $totalCities = DB::table('data')->count('city');
-        $percentage = $cityDataCount / $totalCities * 100;
+        $totalCities = DB::table('data')->whereNotNull('city')->count();
+        $percentage = $totalCities > 0 ? $cityDataCount / $totalCities * 100 : 0;
 
         // Calculate the percentage of a given claim_amount from the claim_amount data table
         $claim_amountCount = DB::table('data')
             ->where('claim_amount', $claim_amountMostClaim)
             ->count();
-        $totalClaimAmount = DB::table('data')->count('claim_amount');
-        $percentageClaimAmount = $claim_amountCount / $totalClaimAmount * 100;
+        $totalClaimAmount = DB::table('data')->whereNotNull('claim_amount')->count();
+        $percentageClaimAmount = $totalClaimAmount > 0 ? $claim_amountCount / $totalClaimAmount * 100 : 0;
 
         // Calculate the percentage of a given diagnosis_1 from the diagnosis_1 data table
         $diagnosisCount = DB::table('data')
             ->where('diagnosis_1', $highestMostDiagnosis)
             ->count();
-        $totalDiagnosis = DB::table('data')->count('diagnosis_1');
-        $percentageDiagnosis = $diagnosisCount / $totalDiagnosis * 100;
+        $totalDiagnosis = DB::table('data')->whereNotNull('diagnosis_1')->count();
+        $percentageDiagnosis = $totalDiagnosis > 0 ? $diagnosisCount / $totalDiagnosis * 100 : 0;
 
 
 
@@ -137,8 +140,8 @@ class ScoringController extends Controller
         $cityDataCount = DB::table('data')
             ->where('city', $mostCity)
             ->count();
-        $totalCities = DB::table('data')->count('city');
-        $percentage = $cityDataCount / $totalCities * 100;
+        $totalCities = DB::table('data')->whereNotNull('city')->count();
+        $percentage = $totalCities > 0 ? $cityDataCount / $totalCities * 100 : 0;
         if ($percentage <= 30) {
             $score = 1;
         } elseif ($percentage >= 31 && $percentage <= 50) {
@@ -155,8 +158,8 @@ class ScoringController extends Controller
         $claim_amountCount = DB::table('data')
         ->where('claim_amount', $claim_amountMostClaim)
         ->count();
-        $totalClaimAmount = DB::table('data')->count('claim_amount');
-         $percentageClaimAmount = $claim_amountCount / $totalClaimAmount * 100;
+        $totalClaimAmount = DB::table('data')->whereNotNull('claim_amount')->count();
+        $percentageClaimAmount = $totalClaimAmount > 0 ? $claim_amountCount / $totalClaimAmount * 100 : 0;
         if ($percentageClaimAmount <= 30) {
             $scoreClaim = 1;
         } elseif ($percentageClaimAmount >= 31 && $percentageClaimAmount <= 50) {
@@ -172,8 +175,8 @@ class ScoringController extends Controller
         $diagnosisCount = DB::table('data')
             ->where('diagnosis_1', $highestMostDiagnosis)
             ->count();
-        $totalDiagnosis = DB::table('data')->count('diagnosis_1');
-        $percentageDiagnosis = $diagnosisCount / $totalDiagnosis * 100;
+        $totalDiagnosis = DB::table('data')->whereNotNull('diagnosis_1')->count();
+        $percentageDiagnosis = $totalDiagnosis > 0 ? $diagnosisCount / $totalDiagnosis * 100 : 0;
         if ($percentageDiagnosis <= 30) {
             $scoreDiagnosis = 1;
         } elseif ($percentageDiagnosis >= 31 && $percentageDiagnosis <= 50) {
@@ -261,6 +264,7 @@ class ScoringController extends Controller
 
             'tables.scoring',
             [
+                'hasData' => true,
                 'data' => $data,
                 'citiesForGraph' => $citiesForGraph, 
                 'total_city' => $total_city,

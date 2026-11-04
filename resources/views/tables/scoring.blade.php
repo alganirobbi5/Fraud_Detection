@@ -2,368 +2,414 @@
 
 @section('content')
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ asset('css/tables.css') }}">
+@endpush
+
 @php
     $scoreBadges = [
-        1 => ['class' => 'score-low', 'text' => 'Low (1)'],
-        2 => ['class' => 'score-medium', 'text' => 'Medium (2)'],
-        3 => ['class' => 'score-high', 'text' => 'High (3)'],
-        4 => ['class' => 'score-very-high', 'text' => 'Very High (4)'],
-        5 => ['class' => 'score-critical', 'text' => 'Critical (5)'],
+        1 => ['class' => 'risk-1', 'text' => 'Rendah (1)'],
+        2 => ['class' => 'risk-2', 'text' => 'Sedang (2)'],
+        3 => ['class' => 'risk-3', 'text' => 'Tinggi (3)'],
+        4 => ['class' => 'risk-4', 'text' => 'Sangat tinggi (4)'],
+        5 => ['class' => 'risk-5', 'text' => 'Kritis (5)'],
     ];
+
+    $money = function ($value) {
+        return $value === null || $value === '' ? '—' : 'Rp' . number_format($value, 0, ',', '.');
+    };
 @endphp
 
-<div class="content-wrapper">
-    <!-- Content Header (Page header) -->
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1 class="m-0">Scoring Table</h1>
-                </div>
-                <!-- /.col -->
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Scoring Table</li>
-                    </ol>
-                </div>
-                <!-- /.col -->
+<div class="content-wrapper dashboard-page tables-page">
+    <div class="dash-shell">
+        <header class="dash-header">
+            <div class="dash-header-main">
+                <p class="dash-eyebrow">Analisis Risiko</p>
+                <h1 class="dash-title">Scoring Klaim</h1>
+                <p class="dash-subtitle">Ringkasan konsentrasi klaim berdasarkan kota, nominal, dan diagnosis.</p>
             </div>
-            <!-- /.row -->
+            <div class="dash-header-actions">
+                <span class="dash-updated"><i class="fas fa-clock"></i>Dihitung dari seluruh data klaim</span>
+                <a href="/data" class="dash-btn">Kelola Data</a>
+                <a href="/scoring" class="dash-btn dash-btn-primary">
+                    <i class="fas fa-rotate"></i> Hitung Ulang
+                </a>
+            </div>
+        </header>
+
+        @if(empty($hasData))
+        <div class="dash-empty">
+            <span class="dash-empty-icon"><i class="fas fa-chart-pie"></i></span>
+            <h2>Belum ada data untuk dihitung</h2>
+            <p>Import data klaim terlebih dahulu agar halaman scoring dapat menampilkan ringkasan risiko.</p>
+            <a href="/data" class="dash-btn dash-btn-primary">
+                <i class="fas fa-file-import"></i> Buka Data Klaim
+            </a>
         </div>
-        <!-- /.container-fluid -->
+        @else
+        <div class="tbl-kpis-3">
+            <div class="dash-kpi tbl-kpi">
+                <div class="tbl-kpi-head">
+                    <span class="tbl-kpi-icon tbl-kpi-icon-primary"><i class="fas fa-city"></i></span>
+                    <p class="tbl-kpi-label">Kota dengan klaim terbanyak</p>
+                </div>
+                <p class="tbl-kpi-value">{{ $mostCity ?? '—' }}</p>
+                <p class="tbl-kpi-meta">{{ $provinceMostClaim ?? '—' }}</p>
+                <p class="tbl-kpi-meta">{{ $addressMostClaim ?? '—' }}</p>
+                <p class="tbl-kpi-meta">No. Certificate: {{ $noCertificateCity ?? '—' }}</p>
+                <div class="tbl-kpi-foot">
+                    <span class="dash-score {{ $scoreBadges[$score]['class'] ?? 'risk-2' }}">{{ $scoreBadges[$score]['text'] ?? 'Sedang (' . $score . ')' }}</span>
+                    <span class="tbl-kpi-pct">{{ number_format($percentage ?? 0, 1) }}% dari total klaim</span>
+                </div>
+            </div>
+
+            <div class="dash-kpi tbl-kpi">
+                <div class="tbl-kpi-head">
+                    <span class="tbl-kpi-icon tbl-kpi-icon-teal"><i class="fas fa-money-bill-wave"></i></span>
+                    <p class="tbl-kpi-label">Nominal klaim tertinggi</p>
+                </div>
+                <p class="tbl-kpi-value">{{ $money($claim_amountHighestClaim ?? null) }}</p>
+                <p class="tbl-kpi-meta">{{ $cityHighestClaim ?? '—' }} &bull; {{ $provinceHighestClaim ?? '—' }}</p>
+                <p class="tbl-kpi-meta">No. Certificate: {{ $noCertificateClaim ?? '—' }}</p>
+                <div class="tbl-kpi-foot">
+                    <span class="dash-score {{ $scoreBadges[$scoreClaim]['class'] ?? 'risk-2' }}">{{ $scoreBadges[$scoreClaim]['text'] ?? 'Sedang (' . $scoreClaim . ')' }}</span>
+                    <span class="tbl-kpi-pct">{{ number_format($percentageClaimAmount ?? 0, 1) }}% dari total klaim</span>
+                </div>
+            </div>
+
+            <div class="dash-kpi tbl-kpi">
+                <div class="tbl-kpi-head">
+                    <span class="tbl-kpi-icon tbl-kpi-icon-amber"><i class="fas fa-stethoscope"></i></span>
+                    <p class="tbl-kpi-label">Diagnosis terbanyak</p>
+                </div>
+                <p class="tbl-kpi-value">{{ $highestMostDiagnosis ?? '—' }}</p>
+                <p class="tbl-kpi-meta">{{ $highestMostDiagnosisDesc ?? '—' }}</p>
+                <p class="tbl-kpi-meta">{{ $highestMostDiagnosis_2 ?? '—' }}</p>
+                <div class="tbl-kpi-foot">
+                    <span class="dash-score {{ $scoreBadges[$scoreDiagnosis]['class'] ?? 'risk-2' }}">{{ $scoreBadges[$scoreDiagnosis]['text'] ?? 'Sedang (' . $scoreDiagnosis . ')' }}</span>
+                    <span class="tbl-kpi-pct">{{ number_format($percentageDiagnosis ?? 0, 1) }}% dari total diagnosis</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tbl-chart-grid">
+            <div class="dash-card">
+                <div class="dash-card-head">
+                    <div>
+                        <h2 class="dash-card-title">Kota dengan Klaim Terbanyak</h2>
+                        <p class="dash-card-sub">Jumlah klaim per kota</p>
+                    </div>
+                </div>
+                <div class="dash-card-body">
+                    <div class="tbl-chart"><canvas id="grafik1"></canvas></div>
+                </div>
+            </div>
+
+            <div class="dash-card">
+                <div class="dash-card-head">
+                    <div>
+                        <h2 class="dash-card-title">Nominal Klaim Tertinggi</h2>
+                        <p class="dash-card-sub">Nilai klaim maksimum per kota</p>
+                    </div>
+                </div>
+                <div class="dash-card-body">
+                    <div class="tbl-chart"><canvas id="grafik2"></canvas></div>
+                </div>
+            </div>
+
+            <div class="dash-card">
+                <div class="dash-card-head">
+                    <div>
+                        <h2 class="dash-card-title">Diagnosis Terbanyak</h2>
+                        <p class="dash-card-sub">Jumlah klaim per diagnosis</p>
+                    </div>
+                </div>
+                <div class="dash-card-body">
+                    <div class="tbl-chart"><canvas id="grafik3"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dash-card">
+            <div class="dash-card-head">
+                <div>
+                    <h2 class="dash-card-title">Detail Kota dengan Klaim Terbanyak</h2>
+                    <p class="dash-card-sub">{{ $mostCity ?? '—' }} &bull; {{ number_format($percentage ?? 0, 1) }}% dari total klaim</p>
+                </div>
+                <span class="dash-score {{ $scoreBadges[$score]['class'] ?? 'risk-2' }}">{{ $scoreBadges[$score]['text'] ?? 'Sedang (' . $score . ')' }}</span>
+            </div>
+            <div class="dash-card-body tbl-card-flush">
+                <div class="tbl-table-scroll">
+                    <table class="dash-table tbl-detail-table">
+                        <thead>
+                            <tr>
+                                <th>No. Certificate</th>
+                                <th>City</th>
+                                <th>Province</th>
+                                <th>Hospital Name</th>
+                                <th>Diagnosis</th>
+                                <th class="is-numeric">Claim Amount</th>
+                                <th class="is-numeric">Percent Value</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($data->where('city', $mostCity) as $item)
+                            <tr>
+                                <td class="tbl-mono">{{ $item->no_certificate ?? '—' }}</td>
+                                <td>{{ $item->city ?? '—' }}</td>
+                                <td>{{ $item->province ?? '—' }}</td>
+                                <td>{{ $item->hospital_name ?? '—' }}</td>
+                                <td class="tbl-cell-wrap">{{ $item->diagnosis_1 ?? '—' }} | {{ $item->diagnosis_description ?? '—' }} | {{ $item->diagnosis_2 ?? '—' }}</td>
+                                <td class="is-numeric tbl-amount">{{ $money($item->claim_amount) }}</td>
+                                <td class="is-numeric">{{ number_format($percentage ?? 0, 1) }}%</td>
+                                <td><span class="dash-score {{ $scoreBadges[$score]['class'] ?? 'risk-2' }}">{{ $scoreBadges[$score]['text'] ?? 'Sedang (' . $score . ')' }}</span></td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="8" class="tbl-empty-cell">Tidak ada detail untuk kota ini.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="dash-card">
+            <div class="dash-card-head">
+                <div>
+                    <h2 class="dash-card-title">Detail Nominal Klaim Tertinggi</h2>
+                    <p class="dash-card-sub">{{ $cityHighestClaim ?? '—' }} &bull; {{ number_format($percentageClaimAmount ?? 0, 1) }}% dari total klaim</p>
+                </div>
+                <span class="dash-score {{ $scoreBadges[$scoreClaim]['class'] ?? 'risk-2' }}">{{ $scoreBadges[$scoreClaim]['text'] ?? 'Sedang (' . $scoreClaim . ')' }}</span>
+            </div>
+            <div class="dash-card-body tbl-card-flush">
+                <div class="tbl-table-scroll">
+                    <table class="dash-table tbl-detail-table">
+                        <thead>
+                            <tr>
+                                <th>No. Certificate</th>
+                                <th>City</th>
+                                <th>Province</th>
+                                <th>Hospital Name</th>
+                                <th>Diagnosis</th>
+                                <th class="is-numeric">Claim Amount</th>
+                                <th class="is-numeric">Percent Value</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="tbl-mono">{{ $noCertificateClaim ?? '—' }}</td>
+                                <td>{{ $cityHighestClaim ?? '—' }}</td>
+                                <td>{{ $provinceHighestClaim ?? '—' }}</td>
+                                <td>{{ $hospital_HighestClaim ?? '—' }}</td>
+                                <td class="tbl-cell-wrap">{{ $highestDiagnosisClaim ?? '—' }} | {{ $highestDiagnosisDescClaim ?? '—' }} | {{ $highestDiagnosis_2claim ?? '—' }}</td>
+                                <td class="is-numeric tbl-amount">{{ $money($claim_amountHighestClaim ?? null) }}</td>
+                                <td class="is-numeric">{{ number_format($percentageClaimAmount ?? 0, 1) }}%</td>
+                                <td><span class="dash-score {{ $scoreBadges[$scoreClaim]['class'] ?? 'risk-2' }}">{{ $scoreBadges[$scoreClaim]['text'] ?? 'Sedang (' . $scoreClaim . ')' }}</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="dash-card">
+            <div class="dash-card-head">
+                <div>
+                    <h2 class="dash-card-title">Detail Diagnosis Terbanyak</h2>
+                    <p class="dash-card-sub">{{ $highestMostDiagnosis ?? '—' }} &bull; {{ number_format($percentageDiagnosis ?? 0, 1) }}% dari total diagnosis</p>
+                </div>
+                <span class="dash-score {{ $scoreBadges[$scoreDiagnosis]['class'] ?? 'risk-2' }}">{{ $scoreBadges[$scoreDiagnosis]['text'] ?? 'Sedang (' . $scoreDiagnosis . ')' }}</span>
+            </div>
+            <div class="dash-card-body tbl-card-flush">
+                <div class="tbl-table-scroll">
+                    <table class="dash-table tbl-detail-table">
+                        <thead>
+                            <tr>
+                                <th>No. Certificate</th>
+                                <th>City</th>
+                                <th>Province</th>
+                                <th>Hospital Name</th>
+                                <th>Diagnosis</th>
+                                <th class="is-numeric">Claim Amount</th>
+                                <th class="is-numeric">Percent Value</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($data->where('diagnosis_1', $highestMostDiagnosis)->where('diagnosis_2', $highestMostDiagnosis_2)->where('diagnosis_description', $highestMostDiagnosisDesc) as $item)
+                            <tr>
+                                <td class="tbl-mono">{{ $item->no_certificate ?? '—' }}</td>
+                                <td>{{ $item->city ?? '—' }}</td>
+                                <td>{{ $item->province ?? '—' }}</td>
+                                <td>{{ $item->hospital_name ?? '—' }}</td>
+                                <td class="tbl-cell-wrap">{{ $item->diagnosis_1 ?? '—' }} | {{ $item->diagnosis_description ?? '—' }} | {{ $item->diagnosis_2 ?? '—' }}</td>
+                                <td class="is-numeric tbl-amount">{{ $money($item->claim_amount) }}</td>
+                                <td class="is-numeric">{{ number_format($percentageDiagnosis ?? 0, 1) }}%</td>
+                                <td><span class="dash-score {{ $scoreBadges[$scoreDiagnosis]['class'] ?? 'risk-2' }}">{{ $scoreBadges[$scoreDiagnosis]['text'] ?? 'Sedang (' . $scoreDiagnosis . ')' }}</span></td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="8" class="tbl-empty-cell">Tidak ada detail untuk diagnosis ini.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @push('scripts')
+        <script>
+            var citiesForGraph = @json($citiesForGraph);
+            var total_city = @json($total_city);
+            var citiesForGraphClaimAmount = @json($citiesForGraphClaimAmount);
+            var total_claimAmount = @json($total_claimAmount);
+            var DiagnosisForGraph = @json($DiagnosisForGraph);
+            var total_highestDiagnosis = @json($total_highestDiagnosis);
+            var diagnosisLabels = DiagnosisForGraph.map(function (label) {
+                return label && label.length > 22 ? label.substring(0, 22) + '…' : label;
+            });
+
+            Chart.defaults.global.defaultFontFamily = "'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+            Chart.defaults.global.defaultFontColor = '#667085';
+            Chart.defaults.global.defaultFontSize = 11;
+
+            var chartTooltip = {
+                backgroundColor: '#101828',
+                titleFontColor: '#ffffff',
+                bodyFontColor: '#ffffff',
+                displayColors: false,
+                cornerRadius: 6,
+                padding: 10
+            };
+
+            new Chart(document.getElementById('grafik1'), {
+                type: 'bar',
+                data: {
+                    labels: citiesForGraph,
+                    datasets: [{
+                        data: total_city,
+                        backgroundColor: 'rgba(29, 31, 190, 0.85)',
+                        hoverBackgroundColor: '#1d1fbe',
+                        borderWidth: 0,
+                        maxBarThickness: 28
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: { display: false },
+                    tooltips: Object.assign({}, chartTooltip, {
+                        callbacks: {
+                            label: function (item) {
+                                return item.value + ' klaim';
+                            }
+                        }
+                    }),
+                    scales: {
+                        xAxes: [{
+                            gridLines: { display: false, drawBorder: false },
+                            ticks: { fontColor: '#667085', maxRotation: 45, minRotation: 0 }
+                        }],
+                        yAxes: [{
+                            ticks: { beginAtZero: true, precision: 0, fontColor: '#667085' },
+                            gridLines: { color: '#eef0f3', drawBorder: false, zeroLineColor: '#e4e7ec' }
+                        }]
+                    }
+                }
+            });
+
+            new Chart(document.getElementById('grafik2'), {
+                type: 'line',
+                data: {
+                    labels: citiesForGraphClaimAmount,
+                    datasets: [{
+                        data: total_claimAmount,
+                        borderColor: '#0e7490',
+                        backgroundColor: 'rgba(14, 116, 144, 0.08)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: '#0e7490',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        fill: true,
+                        lineTension: 0.25
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: { display: false },
+                    tooltips: Object.assign({}, chartTooltip, {
+                        callbacks: {
+                            label: function (item) {
+                                return 'Rp' + Number(item.value).toLocaleString('id-ID');
+                            }
+                        }
+                    }),
+                    scales: {
+                        xAxes: [{
+                            gridLines: { display: false, drawBorder: false },
+                            ticks: { fontColor: '#667085', maxRotation: 45, minRotation: 0 }
+                        }],
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true,
+                                fontColor: '#667085',
+                                callback: function (value) {
+                                    return 'Rp' + Number(value).toLocaleString('id-ID');
+                                }
+                            },
+                            gridLines: { color: '#eef0f3', drawBorder: false, zeroLineColor: '#e4e7ec' }
+                        }]
+                    }
+                }
+            });
+
+            new Chart(document.getElementById('grafik3'), {
+                type: 'horizontalBar',
+                data: {
+                    labels: diagnosisLabels,
+                    datasets: [{
+                        data: total_highestDiagnosis,
+                        backgroundColor: 'rgba(180, 83, 9, 0.85)',
+                        hoverBackgroundColor: '#b45309',
+                        borderWidth: 0,
+                        maxBarThickness: 24
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    legend: { display: false },
+                    tooltips: Object.assign({}, chartTooltip, {
+                        callbacks: {
+                            label: function (item) {
+                                return item.value + ' klaim';
+                            }
+                        }
+                    }),
+                    scales: {
+                        xAxes: [{
+                            ticks: { beginAtZero: true, precision: 0, fontColor: '#667085' },
+                            gridLines: { color: '#eef0f3', drawBorder: false, zeroLineColor: '#e4e7ec' }
+                        }],
+                        yAxes: [{
+                            gridLines: { display: false, drawBorder: false },
+                            ticks: { fontColor: '#667085' }
+                        }]
+                    }
+                }
+            });
+        </script>
+        @endpush
+        @endif
     </div>
-
-    <section class="content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-xl-4 col-md-6 mb-3">
-                    <div class="card summary-card h-100">
-                        <div class="card-body">
-                            <div class="summary-card-icon summary-card-icon-primary">
-                                <i class="fas fa-city"></i>
-                            </div>
-                            <div class="summary-card-content">
-                                <p class="summary-card-label">City With Most Claim</p>
-                                <h3 class="summary-card-value summary-card-value-text">{{ $mostCity }}</h3>
-                                <p class="summary-card-meta">{{ $provinceMostClaim }}</p>
-                                <p class="summary-card-meta">{{ $addressMostClaim }}</p>
-                                <p class="summary-card-meta mb-0">No Certificate: {{ $noCertificateCity }}</p>
-                                <div class="mt-2">
-                                    <span class="badge score-badge {{ $scoreBadges[$score]['class'] ?? 'score-medium' }}">{{ $scoreBadges[$score]['text'] ?? 'Medium ('.$score.')' }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-4 col-md-6 mb-3">
-                    <div class="card summary-card h-100">
-                        <div class="card-body">
-                            <div class="summary-card-icon summary-card-icon-success">
-                                <i class="fas fa-money-bill-wave"></i>
-                            </div>
-                            <div class="summary-card-content">
-                                <p class="summary-card-label">Highest Claim Amount</p>
-                                <h3 class="summary-card-value summary-card-value-text">Rp{{ number_format($claim_amountHighestClaim, 0, ',', '.') }}</h3>
-                                <p class="summary-card-meta">{{ $cityHighestClaim }} | {{ $provinceHighestClaim }}</p>
-                                <p class="summary-card-meta mb-0">{{ number_format($percentageClaimAmount, 1) }}% dari total klaim</p>
-                                <div class="mt-2">
-                                    <span class="badge score-badge {{ $scoreBadges[$scoreClaim]['class'] ?? 'score-medium' }}">{{ $scoreBadges[$scoreClaim]['text'] ?? 'Medium ('.$scoreClaim.')' }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-4 col-md-6 mb-3">
-                    <div class="card summary-card h-100">
-                        <div class="card-body">
-                            <div class="summary-card-icon summary-card-icon-warning">
-                                <i class="fas fa-stethoscope"></i>
-                            </div>
-                            <div class="summary-card-content">
-                                <p class="summary-card-label">Highest Diagnosis</p>
-                                <h3 class="summary-card-value summary-card-value-text">{{ $highestMostDiagnosis }}</h3>
-                                <p class="summary-card-meta">{{ $highestMostDiagnosisDesc }}</p>
-                                <p class="summary-card-meta">{{ $highestMostDiagnosis_2 }}</p>
-                                <p class="summary-card-meta mb-0">{{ number_format($percentageDiagnosis, 1) }}% dari total diagnosis</p>
-                                <div class="mt-2">
-                                    <span class="badge score-badge {{ $scoreBadges[$scoreDiagnosis]['class'] ?? 'score-medium' }}">{{ $scoreBadges[$scoreDiagnosis]['text'] ?? 'Medium ('.$scoreDiagnosis.')' }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Grafik Scoring Data</h3>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-4 mb-4">
-                                    <h6 class="text-uppercase text-muted font-weight-bold mb-3">City With Most Claim</h6>
-                                    <div id="grafik1" style="width: 100%; height: 300px;"></div>
-                                </div>
-                                <div class="col-md-4 mb-4">
-                                    <h6 class="text-uppercase text-muted font-weight-bold mb-3">Highest Claim Amount</h6>
-                                    <div id="grafik2" style="width: 100%; height: 300px;"></div>
-                                </div>
-                                <div class="col-md-4 mb-4">
-                                    <h6 class="text-uppercase text-muted font-weight-bold mb-3">Highest Diagnosis</h6>
-                                    <div id="grafik3" style="width: 100%; height: 300px;"></div>
-                                </div>
-                            </div>
-                        <script src="https://code.highcharts.com/highcharts.js"></script>
-                        <script type="text/javascript">
-                          var citiesForGraph = <?php echo json_encode($citiesForGraph) ?>;
-                          var total_city = <?php echo json_encode($total_city) ?>;
-                          var citiesForGraphClaimAmount = <?php echo json_encode($citiesForGraphClaimAmount) ?>;
-                          var total_claimAmount = <?php echo json_encode($total_claimAmount) ?>;
-                          var DiagnosisForGraph = <?php echo json_encode($DiagnosisForGraph) ?>;
-                          var total_highestDiagnosis = <?php echo json_encode($total_highestDiagnosis) ?>;
-                          Highcharts.chart('grafik1', {
-                                chart: {
-                                    type: 'column'
-                                },
-                                title: {
-                                    text: 'Grafik City With Most Claim'
-                                    
-                                },
-                                xAxis: {
-                                    categories: citiesForGraph,
-                                    labels: {
-                                    style: {
-                                        color: 'black',
-                                        fontSize:'12px'
-                                        }
-                                     }
-                                },
-                                yAxis: {
-                                    min: 0,
-                                    title: {
-                                        text: 'JUMLAH CLAIM'
-                                    }
-                                  },
-                                plotOptions: {
-                                  series: {
-                                    allPointsSelect: true
-                                  }
-                                },
-                                series: [{
-                                  name: 'TOTAL CLAIM',
-                                  data: total_city,
-                                }]
-                            });
-          
-                            Highcharts.chart('grafik2', {
-                                chart: {
-                                    type: 'line'
-                                },
-                                title: {
-                                    text: 'Grafik Highest Claim Amount'
-                                },
-                                xAxis: {
-                                    categories: citiesForGraphClaimAmount,
-                                    labels: {
-                                    style: {
-                                        color: 'black',
-                                        fontSize:'12px'
-                                        }
-                                     }
-                                },
-                                yAxis: {
-                                    min: 0,
-                                    title: {
-                                        text: 'NOMINAL CLAIM'
-                                    }
-                                  },
-                                plotOptions: {
-                                  series: {
-                                    allPointsSelect: true
-                                  }
-                                },
-                                series: [{
-                                  name: 'NOMINAL CLAIM',
-                                  data: total_claimAmount,
-                                }]
-                            });
-          
-          
-                            Highcharts.chart('grafik3', {
-                                chart: {
-                                    type: 'bar'
-                                },
-                                title: {
-                                    text: 'Grafik Highest Diagnosis'
-                                },
-                                xAxis: {
-                                    categories: DiagnosisForGraph,
-                                    labels: {
-                                    style: {
-                                        color: 'black',
-                                        fontSize:'12px'
-                                        }
-                                     }
-                                },
-                                yAxis: {
-                                    min: 0,
-                                    title: {
-                                        text: 'JUMLAH DIAGNOSIS'
-                                    }
-                                  },
-                                plotOptions: {
-                                  series: {
-                                    allPointsSelect: true
-                                  }
-                                },
-                                series: [{
-                                  name: 'TOTAL DIAGNOSIS',
-                                  data: total_highestDiagnosis,
-                                }]
-                            });
-                        </script>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Detail City With Most Claim</h3>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive table-sticky">
-                                <table class="table table-bordered table-hover mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>No Certificate</th>
-                                            <th>City</th>
-                                            <th>Province</th>
-                                            <th>Hospital Name</th>
-                                            <th>Diagnosis</th>
-                                            <th>Claim Amount</th>
-                                            <th>Percent Value</th>
-                                            <th style="width: 130px">Score</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($data as $item)
-                                        @if ($item->city == $mostCity)
-                                        <tr>
-                                            <td>{{ $item->no_certificate }}</td>
-                                            <td>{{ $item->city }}</td>
-                                            <td>{{ $item->province }}</td>
-                                            <td>{{ $item->hospital_name }}</td>
-                                            <td>{{ $item->diagnosis_1 }} | {{ $item->diagnosis_description }} | {{ $item->diagnosis_2 }}</td>
-                                            <td>Rp{{ number_format($item->claim_amount, 0, ',', '.') }}</td>
-                                            <td>{{ number_format($percentage, 1) }}%</td>
-                                            <td>
-                                                <span class="badge score-badge {{ $scoreBadges[$score]['class'] ?? 'score-medium' }}">{{ $scoreBadges[$score]['text'] ?? 'Medium ('.$score.')' }}</span>
-                                            </td>
-                                        </tr>
-                                        @endif
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Detail Highest Claim Amount</h3>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive table-sticky">
-                                <table class="table table-bordered table-hover mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>No Certificate</th>
-                                            <th>City</th>
-                                            <th>Province</th>
-                                            <th>Hospital Name</th>
-                                            <th>Diagnosis</th>
-                                            <th>Claim Amount</th>
-                                            <th>Percent Value</th>
-                                            <th style="width: 130px">Score</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>{{ $noCertificateClaim }}</td>
-                                            <td>{{ $cityHighestClaim }}</td>
-                                            <td>{{ $provinceHighestClaim }}</td>
-                                            <td>{{ $hospital_HighestClaim }}</td>
-                                            <td>{{ $highestDiagnosisClaim }} | {{ $highestDiagnosisDescClaim }} | {{ $highestDiagnosis_2claim }}</td>
-                                            <td>Rp{{ number_format($claim_amountHighestClaim, 0, ',', '.') }}</td>
-                                            <td>{{ number_format($percentageClaimAmount, 1) }}%</td>
-                                            <td>
-                                                <span class="badge score-badge {{ $scoreBadges[$scoreClaim]['class'] ?? 'score-medium' }}">{{ $scoreBadges[$scoreClaim]['text'] ?? 'Medium ('.$scoreClaim.')' }}</span>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Detail Highest Diagnosis</h3>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive table-sticky">
-                                <table class="table table-bordered table-hover mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>No Certificate</th>
-                                            <th>City</th>
-                                            <th>Province</th>
-                                            <th>Hospital Name</th>
-                                            <th>Diagnosis</th>
-                                            <th>Claim Amount</th>
-                                            <th>Percent Value</th>
-                                            <th style="width: 130px">Score</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($data as $item)
-                                        @if ($item->diagnosis_1 == $highestMostDiagnosis && $item->diagnosis_2 == $highestMostDiagnosis_2 && $item->diagnosis_description == $highestMostDiagnosisDesc)
-                                        <tr>
-                                            <td>{{ $item->no_certificate }}</td>
-                                            <td>{{ $item->city }}</td>
-                                            <td>{{ $item->province }}</td>
-                                            <td>{{ $item->hospital_name }}</td>
-                                            <td>{{ $item->diagnosis_1 }} | {{ $item->diagnosis_description }} | {{ $item->diagnosis_2 }}</td>
-                                            <td>Rp{{ number_format($item->claim_amount, 0, ',', '.') }}</td>
-                                            <td>{{ number_format($percentageDiagnosis, 1) }}%</td>
-                                            <td>
-                                                <span class="badge score-badge {{ $scoreBadges[$scoreDiagnosis]['class'] ?? 'score-medium' }}">{{ $scoreBadges[$scoreDiagnosis]['text'] ?? 'Medium ('.$scoreDiagnosis.')' }}</span>
-                                            </td>
-                                        </tr>
-                                        @endif
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 </div>
 @endsection
