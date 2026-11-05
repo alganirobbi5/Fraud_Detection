@@ -55,6 +55,8 @@ class RegisterController extends Controller
             'name' => $request['name'],
             'email' => $request['email'],
             'password' => Hash::make($request['password']),
+            'level' => 'member',
+            'foto' => 'default.jpg',
         ]);
 
         return redirect('/login')->with('message','Your account is created');

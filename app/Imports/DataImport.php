@@ -3,10 +3,7 @@
 namespace App\Imports;
 
 use App\Data;
-use Illuminate\Support\Str;
-use Illuminate\Database\Eloquent\Model;
 use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 
 class DataImport implements ToModel, WithStartRow
@@ -19,7 +16,7 @@ class DataImport implements ToModel, WithStartRow
     public function model(array $row)
     {
         return new Data([
-            'claim_date' => $row[1],
+            'claim_date' => $this->formatDate($row[1]),
             'month_rec' => $row[2],
             'year_rec' => $row[3],
             'claim_type' => $row[4],
@@ -29,8 +26,8 @@ class DataImport implements ToModel, WithStartRow
             'no_claim' => $row[8],
             'no_certificate' => $row[9],
             'status_policy' => $row[10],
-            'effective_date' => $row[11],
-            'expired_date' => $row[12],
+            'effective_date' => $this->formatDate($row[11]),
+            'expired_date' => $this->formatDate($row[12]),
             'partner_distribution_chanel' => $row[13],
             'branch' => $row[14],
             'address' => $row[15],
@@ -45,18 +42,18 @@ class DataImport implements ToModel, WithStartRow
             'benefit_amount' => $row[24],
             'claim_year' => $row[25],
             'age_of_policy' => $row[26],
-            'event_date_from' => $row[27],
-            'event_date_to' => $row[28],
-            'date_of_death' => $row[29],
+            'event_date_from' => $this->formatDate($row[27]),
+            'event_date_to' => $this->formatDate($row[28]),
+            'date_of_death' => $this->formatDate($row[29]),
             'length_of_stay' => $row[30],
             'icu' => $row[31],
             'remaining_days_per_year_diare_dan_typhoid' => $row[32],
             'remaining_days_per_year' => $row[33],
             'exgratia' => $row[34],
             'dokumen_status' => $row[35],
-            'doc_receive_date' => $row[36],
-            'doc_complete_date' => $row[37],
-            'information_complete_date' => $row[38],
+            'doc_receive_date' => $this->formatDate($row[36]),
+            'doc_complete_date' => $this->formatDate($row[37]),
+            'information_complete_date' => $this->formatDate($row[38]),
             'prev_status' => $row[39],
             'claim_status' => $row[40],
             'reject_status' => $row[41],
@@ -74,14 +71,33 @@ class DataImport implements ToModel, WithStartRow
             'surgery_name' => $row[53],
             'age_pending' => $row[54],
             'aging_pending' => $row[55],
-            'decision_date' => $row[56],
+            'decision_date' => $this->formatDate($row[56]),
             'month_dec' => $row[57],
             'year_dec' => $row[58],
             'modified_by' => $row[59],
             'claimant_relation' => $row[61],
-
-
         ]);
+    }
+
+    /**
+     * @param mixed $value
+     * @return mixed
+     */
+    private function formatDate($value)
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_numeric($value)) {
+            try {
+                return \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($value)->format('Y-m-d');
+            } catch (\Exception $e) {
+                return $value;
+            }
+        }
+
+        return $value;
     }
 
     /**
@@ -91,5 +107,4 @@ class DataImport implements ToModel, WithStartRow
     {
         return 2;
     }
-   
 }
