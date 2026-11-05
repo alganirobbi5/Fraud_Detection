@@ -228,6 +228,16 @@
 </script>
 @endif
 
+@if(session('error'))
+<script>
+    toastr.option = {
+        "progressBar" : true,
+        "closeButton" : true,
+    }
+    toastr.error(@json(session('error')));
+</script>
+@endif
+
 <script>
     function myFunction(){
         var x = document.getElementById("password");

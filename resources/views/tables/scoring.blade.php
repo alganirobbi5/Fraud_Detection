@@ -17,7 +17,13 @@
     ];
 
     $money = function ($value) {
-        return $value === null || $value === '' ? '—' : 'Rp' . number_format($value, 0, ',', '.');
+        if ($value === null || $value === '') {
+            return '—';
+        }
+
+        return is_numeric($value)
+            ? 'Rp' . number_format((float) $value, 0, ',', '.')
+            : $value;
     };
 @endphp
 

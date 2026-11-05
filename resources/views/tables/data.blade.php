@@ -9,7 +9,13 @@
 
 @php
     $money = function ($value) {
-        return $value === null || $value === '' ? '—' : 'Rp' . number_format($value, 0, ',', '.');
+        if ($value === null || $value === '') {
+            return '—';
+        }
+
+        return is_numeric($value)
+            ? 'Rp' . number_format((float) $value, 0, ',', '.')
+            : $value;
     };
 @endphp
 
@@ -34,12 +40,20 @@
             </div>
         </header>
 
-        @if ($errors->has('file'))
+        @if ($errors->any() || session('error'))
         <div class="tbl-alert tbl-alert-danger" role="alert">
             <i class="fas fa-circle-exclamation"></i>
             <div>
-                <strong>Import gagal.</strong> {{ $errors->first('file') }}
+                <strong>Import gagal.</strong> {{ session('error') ?? $errors->first() }}
             </div>
+            <button type="button" class="tbl-alert-close" data-dismiss="alert" aria-label="Tutup">&times;</button>
+        </div>
+        @endif
+
+        @if (session('success'))
+        <div class="tbl-alert tbl-alert-success" role="alert">
+            <i class="fas fa-circle-check"></i>
+            <div>{{ session('success') }}</div>
             <button type="button" class="tbl-alert-close" data-dismiss="alert" aria-label="Tutup">&times;</button>
         </div>
         @endif
@@ -222,8 +236,11 @@
                         {{ csrf_field() }}
 
                         <label class="tbl-field-label" for="file-import">Pilih file data klaim</label>
-                        <input type="file" id="file-import" name="file" class="tbl-file-input" required="required">
-                        <p class="tbl-modal-note">Pastikan urutan kolom sesuai template agar data terbaca dengan benar.</p>
+                        <input type="file" id="file-import" name="file" class="tbl-file-input" accept=".xlsx,.xls,.csv" required="required">
+                        <p class="tbl-modal-note">Gunakan file data klaim minimal 62 kolom dengan baris pertama sebagai header. File dengan format lain akan ditolak.</p>
+                        <a class="tbl-template-link" href="{{ asset('template/template_data_klaim.xlsx') }}" download>
+                            <i class="fas fa-download"></i> Download template data klaim (.xlsx)
+                        </a>
                     </div>
                     <div class="tbl-modal-footer">
                         <button type="button" class="dash-btn" data-dismiss="modal">Batal</button>

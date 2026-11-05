@@ -54,6 +54,27 @@
     border-color: #fecdca;
 }
 
+.tbl-alert-success {
+    color: #067647;
+    background: #ecfdf3;
+    border-color: #abefc6;
+}
+
+.tbl-template-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dash-teal);
+    text-decoration: none;
+}
+
+.tbl-template-link:hover {
+    text-decoration: underline;
+}
+
 .tbl-alert > i {
     margin-top: 2px;
 }
