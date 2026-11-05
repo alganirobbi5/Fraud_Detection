@@ -45,6 +45,9 @@ Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('aut
 Route::get('/data', [DataController::class, 'index'])->middleware('auth');
 Route::post('/data/import_data', [DataController::class, 'import_data'])->middleware('auth');
 Route::delete('/data/delete_data', [DataController::class, 'delete_data'])->middleware('auth');
+Route::delete('/data/{id}', [DataController::class, 'destroy'])
+    ->middleware('auth')
+    ->where('id', '[0-9]+');
 
 Route::get('/scoring', [ScoringController::class, 'index'])->middleware('auth');
 Route::get('/scoring', [ScoringController::class, 'scoring'])->middleware('auth');

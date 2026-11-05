@@ -170,11 +170,51 @@
 }
 
 .tbl-data-table .tbl-rownum {
-    width: 48px;
-    min-width: 48px;
+    width: 84px;
+    min-width: 84px;
     font-weight: 600;
     color: var(--dash-faint);
-    text-align: center;
+    text-align: left;
+}
+
+.tbl-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.tbl-row-actions > span {
+    min-width: 20px;
+    text-align: right;
+}
+
+.tbl-row-delete {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    font-size: 11px;
+    color: var(--dash-red);
+    cursor: pointer;
+    background: var(--dash-surface);
+    border: 1px solid #fecdca;
+    border-radius: 6px;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.tbl-row-delete:hover {
+    color: #fff;
+    background: var(--dash-red);
+    border-color: var(--dash-red);
+}
+
+.tbl-row-delete:focus {
+    outline: 2px solid var(--dash-red);
+    outline-offset: 1px;
 }
 
 .tbl-data-table .is-numeric {

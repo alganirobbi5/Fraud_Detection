@@ -34,17 +34,37 @@
                 </button>
                 @if(!$data->isEmpty())
                 <button type="button" class="dash-btn tbl-btn-danger" data-toggle="modal" data-target="#delete_data">
-                    <i class="fas fa-trash-can"></i> Hapus Data
+                    <i class="fas fa-trash-can"></i> Hapus Semua Data
                 </button>
                 @endif
             </div>
         </header>
 
-        @if ($errors->any() || session('error'))
+        @if ($errors->has('file'))
         <div class="tbl-alert tbl-alert-danger" role="alert">
             <i class="fas fa-circle-exclamation"></i>
             <div>
-                <strong>Import gagal.</strong> {{ session('error') ?? $errors->first() }}
+                <strong>Import gagal.</strong> {{ $errors->first('file') }}
+            </div>
+            <button type="button" class="tbl-alert-close" data-dismiss="alert" aria-label="Tutup">&times;</button>
+        </div>
+        @endif
+
+        @if ($errors->has('delete'))
+        <div class="tbl-alert tbl-alert-danger" role="alert">
+            <i class="fas fa-circle-exclamation"></i>
+            <div>
+                <strong>Hapus gagal.</strong> {{ $errors->first('delete') }}
+            </div>
+            <button type="button" class="tbl-alert-close" data-dismiss="alert" aria-label="Tutup">&times;</button>
+        </div>
+        @endif
+
+        @if (session('error'))
+        <div class="tbl-alert tbl-alert-danger" role="alert">
+            <i class="fas fa-circle-exclamation"></i>
+            <div>
+                <strong>Terjadi kesalahan.</strong> {{ session('error') }}
             </div>
             <button type="button" class="tbl-alert-close" data-dismiss="alert" aria-label="Tutup">&times;</button>
         </div>
@@ -149,7 +169,21 @@
                     <tbody>
                         @foreach($data as $row)
                         <tr>
-                            <td class="tbl-rownum">{{ $loop->iteration }}</td>
+                            <td class="tbl-rownum">
+                                <div class="tbl-row-actions">
+                                    <span>{{ $loop->iteration }}</span>
+                                    <button type="button"
+                                        class="tbl-row-delete"
+                                        title="Hapus baris ini"
+                                        aria-label="Hapus baris ini"
+                                        data-toggle="modal"
+                                        data-target="#delete_row"
+                                        data-action="{{ url('/data/' . $row->id) }}"
+                                        data-label="{{ $row->no_claim ?: ($row->no_certificate ?: 'baris ' . $loop->iteration) }}">
+                                        <i class="fas fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </td>
                             <td>{{ $row->claim_date ?? '—' }}</td>
                             <td>{{ $row->month_rec ?? '—' }}</td>
                             <td class="is-numeric">{{ $row->year_rec ?? '—' }}</td>
@@ -254,6 +288,35 @@
     </div>
 
     @if(!$data->isEmpty())
+    <div class="modal fade tbl-modal" id="delete_row" tabindex="-1" role="dialog" aria-labelledby="deleteRowLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <form method="POST" id="delete-row-form">
+                @csrf
+                @method('DELETE')
+                <div class="modal-content">
+                    <div class="tbl-modal-header tbl-modal-header-danger">
+                        <div>
+                            <h5 class="tbl-modal-title" id="deleteRowLabel">Hapus baris ini?</h5>
+                            <p class="tbl-modal-sub">Tindakan ini tidak dapat dibatalkan.</p>
+                        </div>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Tutup">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="tbl-modal-body">
+                        <p>Data klaim <strong id="delete-row-label">—</strong> akan dihapus dari tabel.</p>
+                    </div>
+                    <div class="tbl-modal-footer">
+                        <button type="button" class="dash-btn" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="dash-btn tbl-btn-danger">
+                            <i class="fas fa-trash-can"></i> Ya, hapus baris
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <form method="POST" action="/data/delete_data">
         @csrf
         @method('DELETE')
@@ -275,7 +338,7 @@
                     <div class="tbl-modal-footer">
                         <button type="button" class="dash-btn" data-dismiss="modal">Batal</button>
                         <button type="submit" class="dash-btn tbl-btn-danger">
-                            <i class="fas fa-trash-can"></i> Ya, hapus
+                            <i class="fas fa-trash-can"></i> Ya, hapus semua
                         </button>
                     </div>
                 </div>
@@ -285,3 +348,18 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    $(function () {
+        $('#delete_row').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var form = document.getElementById('delete-row-form');
+            var label = document.getElementById('delete-row-label');
+
+            form.action = button.data('action');
+            label.textContent = button.data('label');
+        });
+    });
+</script>
+@endpush

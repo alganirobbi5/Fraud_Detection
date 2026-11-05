@@ -158,6 +158,34 @@ class DataController extends Controller
         return uniqid('', true) . '_' . ($name === '' ? 'data.xlsx' : $name);
     }
 
+    public function destroy($id)
+    {
+        $data = Data::find($id);
+
+        if ($data === null) {
+            return redirect('/data')->withErrors([
+                'delete' => 'Data klaim tidak ditemukan. Mungkin baris tersebut sudah dihapus.',
+            ]);
+        }
+
+        $label = $data->no_claim ?: ($data->no_certificate ?: '#' . $data->id);
+
+        try {
+            $data->delete();
+        } catch (Throwable $e) {
+            Log::error('Hapus data klaim gagal', [
+                'id' => $id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return redirect('/data')->withErrors([
+                'delete' => 'Baris data gagal dihapus. Silakan coba lagi.',
+            ]);
+        }
+
+        return redirect('/data')->with('success', 'Baris ' . $label . ' berhasil dihapus.');
+    }
+
     public function delete_data()
     {
         $file_path = public_path('file_data');
