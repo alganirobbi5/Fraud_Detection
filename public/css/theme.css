@@ -385,6 +385,10 @@ body.login-page {
     gap: 10px;
 }
 
+.layout-fixed .main-sidebar .sidebar {
+    overflow-y: auto;
+}
+
 .main-sidebar .nav-sidebar .nav-link {
     margin: 1px 8px;
     border-radius: var(--radius-sm);
